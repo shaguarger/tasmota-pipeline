@@ -20,12 +20,12 @@ deploy: &deploy_controller
     args:
       - -ec
       - |
-        firmware_name="tasmota-release/tasmota.bin"
+        firmware_name="tasmota.bin"
         echo "updating ${TARGET} with ${firmware_name}"
         curl -XPOST --digest \
          -H "Content-Type: multipart/form-data" \
          -F "filename=@tasmota-release/${firmware_name}" \
-         -F "name=\"upgrade\"" http://${TARGET}/u2
+         -F "name=\"u2\"" http://${TARGET}/u2
         echo "done"
     
 
