@@ -1,0 +1,47 @@
+resources:
+  - name: tasmota-release
+    icon: github-circle
+    type: github-release
+    source:
+      owner: arendst
+      repository: Tasmota
+
+deploy: &deploy_controller
+  platform: linux
+  image_resource:
+    type: docker-image
+    source:
+      repository: appropriate/curl
+  inputs:
+    - name: tasmota-release
+  run:
+    path: sh
+    args:
+      - -ec
+      - |
+        firmware_name="tasmota-release/tasmota.bin"
+        echo "updating ${TARGET} with ${firmware_name}"
+        curl -XPOST --digest \
+         -H "Content-Type: multipart/form-data" \
+         -F "filename=@tasmota-release/${firmware_name}" \
+         -F "name=\"upgrade\"" http://${TARGET}/u2
+        echo "done"
+    
+
+jobs:
+- name: deploy release to controllers
+  serial: true
+  plan:
+  - get: tasmota-release
+
+  - in_parallel:
+    - task: upload to christmas device in kitchen 🎄
+      params:
+        TARGET: ((controller.christmas_kitchen))
+      config:
+        <<: *deploy_controller
+    - task: upload to christmas device on balcony 🎄
+      params:
+        TARGET: ((controller.christmas_balcony))
+      config:
+        <<: *deploy_controller
