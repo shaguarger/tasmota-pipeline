@@ -20,13 +20,26 @@ deploy: &deploy_controller
     args:
       - -ec
       - |
-        firmware_name="tasmota.bin"
-        echo "updating ${TARGET} with ${firmware_name}"
-        curl -XPOST --digest \
-         -H "Content-Type: multipart/form-data" \
-         -F "filename=@tasmota-release/${firmware_name}" \
-         -F "name=\"u2\"" http://${TARGET}/u2
-        echo "done"
+        function update() {
+          firmware_name=$1
+          echo "updating ${TARGET} with ${firmware_name}"
+          curl -XPOST --digest \
+           -s -o /dev/null -w ''%{http_code}'' \
+           -H "Content-Type: multipart/form-data" \
+           -F "u2=@tasmota-release/${firmware_name}" \
+           http://${TARGET}/u2
+          echo "done"
+        }
+
+        update "tasmota-minimal.bin"
+        sleep 5
+
+        while [ "$(curl -s -o /dev/null -w ''%{http_code}'' http://${TARGET}/)" != "200" ]; do
+          echo "Device not up, yet..."
+          sleep 5
+        done
+
+        update "tasmota.bin"
     
 
 jobs:
